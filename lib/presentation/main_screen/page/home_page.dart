@@ -1,3 +1,7 @@
+// ignore_for_file: prefer_interpolation_to_compose_strings
+
+import 'dart:convert';
+
 import 'package:app_show_categories/core/utils/contants.dart';
 import 'package:app_show_categories/core/utils/format-date.dart';
 import 'package:app_show_categories/domain/domain.dart';
@@ -40,8 +44,8 @@ class _HomePageState extends State<HomePage>
   bool _hasNextPage = true;
   bool _isLoadMoreRunning = false;
 
-  List? _data;
-  var groupByDate;
+  Map<String, List<TaskEntity>>? _data;
+  List? _testList;
 
   @override
   void initState() {
@@ -166,7 +170,7 @@ class _HomePageState extends State<HomePage>
                       Tabbar(
                         tabs: _tabs,
                         onTab: (p0) {
-                          _data = [];
+                          _data = null;
                           _offset = 0;
                           _status = _tabs[p0].text!;
                           callBloc(0, _limit, _tabs[p0].text.toString());
@@ -181,7 +185,7 @@ class _HomePageState extends State<HomePage>
           ),
           Expanded(
             child: TabBarView(
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               controller: _tabController,
               children: List<Widget>.generate(_tabs.length, (int index) {
                 return BlocBuilder<TodoListCubit, TodoListState>(
@@ -193,116 +197,248 @@ class _HomePageState extends State<HomePage>
                         ),
                       );
                     } else if (state is TodoListHasData) {
-                      final tasks = state.result.tasks;
+                      final test = state.result.tasks;
+
+                      Map<String, List<TaskEntity>> groupByDate = groupBy(
+                          state.result.tasks!,
+                          (obj) => obj.createdAt!.toString().substring(0, 10));
 
                       if (_offset != 0) {
-                        _data!.addAll(tasks);
+                        _testList!.addAll(test);
+                        _data!.addAll(groupByDate);
                       } else {
-                        _data = tasks!;
+                        _data = groupByDate;
+                        _testList = test;
                       }
-
                       return Column(
                         children: [
                           Text(
-                            '${_data!.length}',
+                            '${_testList!.length}',
                             style: const TextStyle(fontSize: 22),
                           ),
                           Expanded(
-                            child: ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: _data!.length,
-                              controller: _scrollController,
-                              itemBuilder: (_, index) {
-                                return Container(
-                                  margin: const EdgeInsets.all(10),
-                                  padding: const EdgeInsets.all(10),
-                                  child: Slidable(
-                                    endActionPane: ActionPane(
-                                      motion: const ScrollMotion(),
-                                      children: [
-                                        SlidableAction(
-                                          onPressed: (context) {
-                                            setState(() {
-                                              _data!.removeAt(index);
-                                            });
-                                          },
-                                          backgroundColor:
-                                              const Color(0xFFFE4A49),
-                                          foregroundColor: Colors.white,
-                                          icon: Icons.delete,
-                                          label: 'Delete',
-                                        ),
-                                      ],
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        const CircleAvatar(
-                                          radius: 30,
-                                          backgroundColor:
-                                              Color.fromARGB(76, 155, 190, 255),
-                                          child: Icon(
-                                            Icons.food_bank_rounded,
-                                            color: Colors.black,
-                                            size: 30,
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.5,
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                              child: ListView.builder(
+                            itemCount: _data!.length,
+                            controller: _scrollController,
+                            itemBuilder: (context, i) {
+                              String date = _data!.keys.elementAt(i);
+                              List itemsInCategory = _data![date]!;
+                              print('_data > ' + _data.toString());
+                              return Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 24, right: 24),
+                                    child: Text(
+                                        formatDateStringDDMMYYtoDate(date),
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                  ),
+                                  ListView.builder(
+                                    shrinkWrap: true,
+                                    // controller: _scrollController,
+                                    physics: const ClampingScrollPhysics(),
+                                    itemCount: itemsInCategory.length,
+                                    itemBuilder: (context, _index) {
+                                      return Container(
+                                        margin: const EdgeInsets.all(10),
+                                        padding: const EdgeInsets.all(10),
+                                        child: Slidable(
+                                          endActionPane: ActionPane(
+                                            motion: const ScrollMotion(),
                                             children: [
-                                              Text(
-                                                formatDateStringDDMMYYtoDate(
-                                                    _data![index]
-                                                        .createdAt
-                                                        .toString()),
-                                                style: const TextStyle(
-                                                    color: Colors.red,
-                                                    fontSize: 22),
-                                              ),
-                                              Text(
-                                                _data![index].title.toString(),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  fontSize: 22,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: Color.fromARGB(
-                                                      255, 51, 51, 51),
-                                                ),
-                                              ),
-                                              Text(
-                                                _data![index]
-                                                    .description
-                                                    .toString(),
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  fontSize: 22,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: Color.fromARGB(
-                                                      255, 149, 149, 149),
-                                                ),
+                                              SlidableAction(
+                                                onPressed: (context) {
+                                                  _data!.removeWhere((key,
+                                                          value) =>
+                                                      (value[_index].id ==
+                                                          itemsInCategory[
+                                                                  _index]
+                                                              .id));
+                                                  // // // print(_data!.values);
+                                                  print(_data.toString() +
+                                                      ' ' +
+                                                      _data!.length.toString());
+                                                },
+                                                backgroundColor:
+                                                    const Color(0xFFFE4A49),
+                                                foregroundColor: Colors.white,
+                                                icon: Icons.delete,
+                                                label: 'Delete',
                                               ),
                                             ],
                                           ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const CircleAvatar(
+                                                radius: 30,
+                                                backgroundColor: Color.fromARGB(
+                                                    76, 155, 190, 255),
+                                                child: Icon(
+                                                  Icons.food_bank_rounded,
+                                                  color: Colors.black,
+                                                  size: 30,
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.5,
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      itemsInCategory[_index]
+                                                          .title
+                                                          .toString(),
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                        fontSize: 22,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        color: Color.fromARGB(
+                                                            255, 51, 51, 51),
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      itemsInCategory[_index]
+                                                          .description
+                                                          .toString(),
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                        fontSize: 22,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                        color: Color.fromARGB(
+                                                            255, 149, 149, 149),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              IconButton(
+                                                  onPressed: () {},
+                                                  icon: const Icon(
+                                                      Icons.more_vert))
+                                            ],
+                                          ),
                                         ),
-                                        IconButton(
-                                            onPressed: () {},
-                                            icon: const Icon(Icons.more_vert))
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
+                                      );
+                                    },
+                                  )
+                                ],
+                              );
+                              ;
+                            },
+                          )
+
+                              //     ListView.builder(
+                              //   shrinkWrap: true,
+                              //   itemCount: _data!.length,
+                              //   controller: _scrollController,
+                              //   itemBuilder: (_, index) {
+                              //     return
+                              // Container(
+                              //       margin: const EdgeInsets.all(10),
+                              //       padding: const EdgeInsets.all(10),
+                              //       child: Slidable(
+                              //         endActionPane: ActionPane(
+                              //           motion: const ScrollMotion(),
+                              //           children: [
+                              //             SlidableAction(
+                              //               onPressed: (context) {
+                              //                 setState(() {
+                              //                   _data!.removeAt(index);
+                              //                 });
+                              //               },
+                              //               backgroundColor:
+                              //                   const Color(0xFFFE4A49),
+                              //               foregroundColor: Colors.white,
+                              //               icon: Icons.delete,
+                              //               label: 'Delete',
+                              //             ),
+                              //           ],
+                              //         ),
+                              //         child: Row(
+                              //           mainAxisAlignment:
+                              //               MainAxisAlignment.spaceBetween,
+                              //           children: [
+                              //             const CircleAvatar(
+                              //               radius: 30,
+                              //               backgroundColor:
+                              //                   Color.fromARGB(76, 155, 190, 255),
+                              //               child: Icon(
+                              //                 Icons.food_bank_rounded,
+                              //                 color: Colors.black,
+                              //                 size: 30,
+                              //               ),
+                              //             ),
+                              //             SizedBox(
+                              //               width: MediaQuery.of(context)
+                              //                       .size
+                              //                       .width *
+                              //                   0.5,
+                              //               child: Column(
+                              //                 crossAxisAlignment:
+                              //                     CrossAxisAlignment.start,
+                              //                 children: [
+                              //                   Text(
+                              //                     formatDateStringDDMMYYtoDate(
+                              //                         _data![index]
+                              //                             .createdAt
+                              //                             .toString()),
+                              //                     style: const TextStyle(
+                              //                         color: Colors.red,
+                              //                         fontSize: 22),
+                              //                   ),
+                              //                   Text(
+                              //                     _data![index].title.toString(),
+                              //                     maxLines: 1,
+                              //                     overflow: TextOverflow.ellipsis,
+                              //                     style: const TextStyle(
+                              //                       fontSize: 22,
+                              //                       fontWeight: FontWeight.w700,
+                              //                       color: Color.fromARGB(
+                              //                           255, 51, 51, 51),
+                              //                     ),
+                              //                   ),
+                              //                   Text(
+                              //                     _data![index]
+                              //                         .description
+                              //                         .toString(),
+                              //                     maxLines: 2,
+                              //                     overflow: TextOverflow.ellipsis,
+                              //                     style: const TextStyle(
+                              //                       fontSize: 22,
+                              //                       fontWeight: FontWeight.w500,
+                              //                       color: Color.fromARGB(
+                              //                           255, 149, 149, 149),
+                              //                     ),
+                              //                   ),
+                              //                 ],
+                              //               ),
+                              //             ),
+                              //             IconButton(
+                              //                 onPressed: () {},
+                              //                 icon: const Icon(Icons.more_vert))
+                              //           ],
+                              //         ),
+                              //       ),
+                              //     );
+                              //   },
+                              // ),
+
+                              ),
                           if (_isLoadMoreRunning == true)
                             const Padding(
                               padding: EdgeInsets.only(top: 10, bottom: 40),
@@ -323,7 +459,6 @@ class _HomePageState extends State<HomePage>
                         ),
                       );
                     } else {
-                      _isLoadMoreRunning = false;
                       return Container();
                     }
                   },
@@ -336,21 +471,6 @@ class _HomePageState extends State<HomePage>
     );
   }
 }
-
-//  StickyGroupedListView<TaskEntity, DateTime>(
-//               elements: _data!,
-//               groupBy: (TaskEntity element) => DateTime.parse(
-//                 element.createdAt.toString(),
-//                 // element.createdAt!.month,
-//                 // element.createdAt!.day,
-//               ),
-//               groupSeparatorBuilder: _getGroupSeparator,
-//               itemBuilder: _getItem,
-//               itemComparator: (e1, e2) =>
-//                   e1.id!.compareTo(e2.id.toString()),
-//               itemScrollController: itemScrollController,
-//               order: StickyGroupedListOrder.ASC,
-//             )
 
 Widget _getGroupSeparator(TaskEntity element) {
   return SizedBox(
@@ -449,3 +569,18 @@ Widget _getItem(BuildContext ctx, TaskEntity element) {
     ),
   );
 }
+
+// StickyGroupedListView<TaskEntity, DateTime>(
+//       elements: _data!,
+//       groupBy: (TaskEntity element) => DateTime.parse(
+//         element.createdAt.toString(),
+//         // element.createdAt!.month,
+//         // element.createdAt!.day,
+//       ),
+//       groupSeparatorBuilder: _getGroupSeparator,
+//       itemBuilder: _getItem,
+//       itemComparator: (e1, e2) =>
+//           e1.id!.compareTo(e2.id.toString()),
+//       itemScrollController: itemScrollController,
+//       order: StickyGroupedListOrder.ASC,
+//     )
