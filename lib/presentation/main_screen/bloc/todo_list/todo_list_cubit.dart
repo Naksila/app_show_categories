@@ -18,7 +18,7 @@ class TodoListCubit extends Cubit<TodoListState> {
       offset,
       limit,
       'createdAt',
-      false,
+      true,
       status,
     );
 

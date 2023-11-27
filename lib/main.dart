@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:app_show_categories/core/utils/contants.dart';
 import 'package:app_show_categories/injection.dart' as di;
 import 'package:app_show_categories/presentation/main_screen/bloc/bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:local_session_timeout/local_session_timeout.dart';
 
 import 'presentation/lock_screen/pegs/page.dart';
 import 'presentation/main_screen/page/page.dart';
@@ -16,19 +19,47 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  MyApp({super.key});
+
+  final sessionStateStream = StreamController<SessionState>();
+  final _navigatorKey = GlobalKey<NavigatorState>();
+
+  NavigatorState get _navigator => _navigatorKey.currentState!;
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home:
-          //  const PasscodeLockScreenPages(),
-          BlocProvider(
-        create: (context) => di.locator<TodoListCubit>(),
-        child: const HomePage(),
+    final sessionConfig = SessionConfig(
+      // invalidateSessionForAppLostFocus: const Duration(seconds: 10),
+      invalidateSessionForUserInactivity: const Duration(seconds: 10),
+    );
+    sessionConfig.stream.listen((SessionTimeoutState timeoutEvent) {
+      sessionStateStream.add(SessionState.stopListening);
+      if (timeoutEvent == SessionTimeoutState.userInactivityTimeout) {
+        _navigator.push(MaterialPageRoute(
+          builder: (_) => PasscodeLockScreenPages(
+            sessionStateStream: sessionStateStream,
+          ),
+        ));
+      } else if (timeoutEvent == SessionTimeoutState.appFocusTimeout) {
+        _navigator.push(MaterialPageRoute(
+          builder: (_) => PasscodeLockScreenPages(
+            sessionStateStream: sessionStateStream,
+          ),
+        ));
+      }
+    });
+    return SessionTimeoutManager(
+      // userActivityDebounceDuration: const Duration(seconds: 10),
+      sessionConfig: sessionConfig,
+      sessionStateStream: sessionStateStream.stream,
+      child: MaterialApp(
+        navigatorKey: _navigatorKey,
+        theme: ThemeData(fontFamily: 'DB Heavent'),
+        onGenerateRoute: (route) => RouterGenerator.generateRoute(route),
+        home: PasscodeLockScreenPages(
+          sessionStateStream: sessionStateStream,
+        ),
       ),
-      onGenerateRoute: (route) => RouterGenerator.generateRoute(route),
-      theme: ThemeData(fontFamily: 'DB Heavent'),
     );
   }
 }

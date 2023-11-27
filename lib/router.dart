@@ -14,8 +14,6 @@ class RouterGenerator {
   static Route? generateRoute(RouteSettings settings) {
     Widget? page;
 
-    print('settings >>> ' + settings.toString());
-
     if (settings.name != null && settings.name!.startsWith(route)) {
       if (!_isInit) {
         di.init();
@@ -28,18 +26,18 @@ class RouterGenerator {
 
     switch (settings.name) {
       case PasscodeLockScreenPages.ROUTE_NAME:
-        page = const PasscodeLockScreenPages();
+        final args = settings.arguments as Map?;
+        page = PasscodeLockScreenPages(
+          sessionStateStream: args?['sessionStateStream'],
+        );
         break;
       case HomePage.ROUTE_NAME:
-        // page = MultiBlocProvider(
-        //   providers: [
-        //     BlocProvider.value(value: di.locator<TodoListCubit>()),
-        //   ],
-        //   child: const HomePage(),
-        // );
+        final args = settings.arguments as Map?;
         page = BlocProvider(
           create: (context) => di.locator<TodoListCubit>(),
-          child: const HomePage(),
+          child: HomePage(
+            sessionStateStream: args?['sessionStateStream'],
+          ),
         );
         break;
     }

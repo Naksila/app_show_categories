@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_interpolation_to_compose_strings
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:app_show_categories/core/utils/contants.dart';
@@ -14,12 +15,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:grouped_list/grouped_list.dart';
+import 'package:local_session_timeout/local_session_timeout.dart';
 import 'package:sticky_grouped_list/sticky_grouped_list.dart';
 
 class HomePage extends StatefulWidget {
   static const ROUTE_NAME = '${route}/homepage';
+  final StreamController<SessionState> sessionStateStream;
 
-  const HomePage({super.key});
+  const HomePage({
+    super.key,
+    required this.sessionStateStream,
+  });
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -27,10 +33,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+  TabController? _tabController;
   ScrollController? _scrollController;
-  final GroupedItemScrollController itemScrollController =
-      GroupedItemScrollController();
 
   final _tabs = const [
     Tab(text: 'TODO'),
@@ -57,12 +61,14 @@ class _HomePageState extends State<HomePage>
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _tabController?.dispose();
     _scrollController?.dispose();
     super.dispose();
   }
 
   void loadMore() async {
+    widget.sessionStateStream.add(SessionState.startListening);
+
     if (_hasNextPage == true &&
         _isLoadMoreRunning == false &&
         _scrollController!.position.extentAfter < 100) {
@@ -122,7 +128,7 @@ class _HomePageState extends State<HomePage>
                           children: [
                             CircleAvatar(
                               backgroundColor: Colors.amberAccent,
-                              child: Text('AH'),
+                              child: Text('SN'),
                             ),
                           ],
                         ),
@@ -174,8 +180,10 @@ class _HomePageState extends State<HomePage>
                           _offset = 0;
                           _status = _tabs[p0].text!;
                           callBloc(0, _limit, _tabs[p0].text.toString());
+                          widget.sessionStateStream
+                              .add(SessionState.startListening);
                         },
-                        tabController: _tabController,
+                        tabController: _tabController!,
                       ),
                     ],
                   ),
@@ -222,7 +230,7 @@ class _HomePageState extends State<HomePage>
                             controller: _scrollController,
                             itemBuilder: (context, i) {
                               String date = _data!.keys.elementAt(i);
-                              List itemsInCategory = _data![date]!;
+                              List<TaskEntity> itemsInCategory = _data![date]!;
                               print('_data > ' + _data.toString());
                               return Column(
                                 mainAxisAlignment: MainAxisAlignment.start,
@@ -234,6 +242,7 @@ class _HomePageState extends State<HomePage>
                                     child: Text(
                                         formatDateStringDDMMYYtoDate(date),
                                         style: const TextStyle(
+                                            fontSize: 22,
                                             fontWeight: FontWeight.bold)),
                                   ),
                                   ListView.builder(
@@ -251,16 +260,10 @@ class _HomePageState extends State<HomePage>
                                             children: [
                                               SlidableAction(
                                                 onPressed: (context) {
-                                                  _data!.removeWhere((key,
-                                                          value) =>
-                                                      (value[_index].id ==
-                                                          itemsInCategory[
-                                                                  _index]
-                                                              .id));
-                                                  // // // print(_data!.values);
-                                                  print(_data.toString() +
-                                                      ' ' +
-                                                      _data!.length.toString());
+                                                  widget.sessionStateStream.add(
+                                                      SessionState
+                                                          .startListening);
+                                                  setState(() {});
                                                 },
                                                 backgroundColor:
                                                     const Color(0xFFFE4A49),
