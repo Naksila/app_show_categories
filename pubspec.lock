@@ -94,14 +94,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_app_lock:
-    dependency: "direct main"
-    description:
-      name: flutter_app_lock
-      sha256: "98890a2a2bc507b2f85165515189750e134921f8f4022ec10bd223033633a3ba"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.0.0"
   flutter_bloc:
     dependency: "direct main"
     description:
@@ -139,14 +131,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.6.4"
-  grouped_list:
-    dependency: "direct main"
-    description:
-      name: grouped_list
-      sha256: fef106470186081c32636aa055492eee7fc7fe8bf0921a48d31ded24821af19f
-      url: "https://pub.dev"
-    source: hosted
-    version: "5.1.2"
   http_parser:
     dependency: transitive
     description:
@@ -243,14 +227,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.1"
-  scrollable_positioned_list:
-    dependency: transitive
+  rxdart:
+    dependency: "direct main"
     description:
-      name: scrollable_positioned_list
-      sha256: "1b54d5f1329a1e263269abc9e2543d90806131aa14fe7c6062a8054d57249287"
+      name: rxdart
+      sha256: "0c7c0cedd93788d996e33041ffecda924cc54389199cde4e6a34b440f50044cb"
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.8"
+    version: "0.27.7"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -272,14 +256,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.11.0"
-  sticky_grouped_list:
-    dependency: "direct main"
-    description:
-      name: sticky_grouped_list
-      sha256: "40398cb90321f07cbdbdd3049c27a5f048bd75a13abb19453b07a956f53a0eda"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.1.0"
   stream_channel:
     dependency: transitive
     description:

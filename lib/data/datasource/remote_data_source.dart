@@ -42,7 +42,7 @@ class ResourceRemoteDataSourceImpl extends ResourceRemoteDataSource {
         throw ServerException(response.statusMessage.toString());
       }
 
-      print('json  >>> ' + json.encode(response.data));
+      // print('json  >>> ' + json.encode(response.data));
 
       return ToDoListModel.fromJson(response.data);
     } catch (e) {

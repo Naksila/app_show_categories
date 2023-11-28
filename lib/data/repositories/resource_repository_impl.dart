@@ -28,7 +28,7 @@ class ResourceRepositoryImpl implements ResourceRepository {
         status,
       );
 
-      print('remoteDataSourceImpl  >>> ' + result.toString());
+      // print('remoteDataSourceImpl  >>> ' + result.toString());
 
       return Right(result.toEntity(toDoListModel: result));
     } on ServerException {

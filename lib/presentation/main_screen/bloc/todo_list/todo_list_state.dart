@@ -11,7 +11,11 @@ final class TodoListInitial extends TodoListState {}
 
 class TodoListFirstLoading extends TodoListState {}
 
-class TodoListLoading extends TodoListState {}
+class TodoListLoading extends TodoListState {
+  final TodoListEntity list;
+  final String? loading;
+  const TodoListLoading(this.list, this.loading);
+}
 
 class TodoListFailed extends TodoListState {
   final String message;
@@ -20,13 +24,20 @@ class TodoListFailed extends TodoListState {
 
 class TodoListCancel extends TodoListState {}
 
+class TodoListEmpty extends TodoListState {}
+
 class TodoListHasData extends TodoListState {
-  final result;
+  final TodoListEntity list;
 
   const TodoListHasData(
+    this.list,
+  );
+}
+
+class TodoListFirstHasData extends TodoListState {
+  final result;
+
+  const TodoListFirstHasData(
     this.result,
   );
-
-  @override
-  List<Object> get props => [];
 }
