@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final sessionConfig = SessionConfig(
       // invalidateSessionForAppLostFocus: const Duration(seconds: 10),
-      invalidateSessionForUserInactivity: const Duration(seconds: 10),
+      invalidateSessionForUserInactivity: const Duration(minutes: 10),
     );
     sessionConfig.stream.listen((SessionTimeoutState timeoutEvent) {
       print('SessionTimeoutState');

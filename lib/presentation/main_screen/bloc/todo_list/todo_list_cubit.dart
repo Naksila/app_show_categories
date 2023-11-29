@@ -21,13 +21,14 @@ class TodoListCubit extends Cubit<TodoListState> {
   TodoListCubit(this._listUsecase) : super(TodoListInitial());
 
   void getToDoList(offset, limit, status) async {
+    print(status);
     bool isInitial = offset == 0;
     isInitial
         ? emit(TodoListFirstLoading())
         : emit(TodoListLoading(data, 'Loading'));
 
     if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () async {
+    _debounce = Timer(const Duration(milliseconds: 800), () async {
       final response = await _listUsecase.execute(
         offset,
         limit,
@@ -70,7 +71,7 @@ class TodoListCubit extends Cubit<TodoListState> {
 
   void removeTask(TodoListEntity tasks, TaskEntity removeTask) {
     emit(TodoListLoading(tasks, null));
-    tasks.tasks?.removeWhere((element) => element.id == removeTask.id);
+    tasks.tasks?.removeWhere((element) => element == removeTask);
     emit(TodoListHasData(tasks));
   }
 

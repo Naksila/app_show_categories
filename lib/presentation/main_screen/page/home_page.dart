@@ -1,5 +1,3 @@
-// ignore_for_file: prefer_interpolation_to_compose_strings
-
 import 'dart:async';
 import 'dart:convert';
 
@@ -34,6 +32,8 @@ class _HomePageState extends State<HomePage>
   TabController? _tabController;
   ScrollController? _scrollController;
 
+  late Future<List<TaskEntity>> _test;
+
   final _tabs = const [
     Tab(text: 'TODO'),
     Tab(text: 'DOING'),
@@ -41,15 +41,15 @@ class _HomePageState extends State<HomePage>
   ];
 
   int _offset = 0;
-  int _limit = 10;
+  int _limit = 5;
   int _totalPages = 0;
   String _status = 'TODO';
-  bool _hasNextPage = true;
-  bool _isLoadMoreRunning = false;
+  double y = 0;
 
   Map<String, List<TaskEntity>>? _data;
   String? date;
   List<TaskEntity>? itemsInCategory;
+  Map<String, List<TaskEntity>>? groupByDate;
   TodoListEntity _tasks =
       TodoListEntity(tasks: [], pageNumber: 0, totalPages: 0);
 
@@ -67,14 +67,7 @@ class _HomePageState extends State<HomePage>
     callBloc(_offset, _limit, _status);
     _tabController?.dispose();
     _scrollController?.dispose();
-    print("Disposing first route");
     super.dispose();
-  }
-
-  @override
-  void didChangeDependencies() {
-    print("didChangeDependencies");
-    super.didChangeDependencies();
   }
 
   void loadMore() async {
@@ -86,6 +79,15 @@ class _HomePageState extends State<HomePage>
 
   void callBloc(int offset, int limit, String status) {
     context.read<TodoListCubit>().getToDoList(offset, limit, status);
+    widget.sessionStateStream.add(SessionState.startListening);
+  }
+
+  Future<void> _refreshData() async {
+    callBloc(0, _limit, _status);
+
+    setState(() {
+      _offset = 0;
+    });
   }
 
   @override
@@ -95,8 +97,8 @@ class _HomePageState extends State<HomePage>
         children: [
           Stack(
             children: [
-              _topbar(context),
-              _tabbar(
+              containerHeader(context),
+              containerTabbar(
                 context,
                 Tabbar(
                   tabs: _tabs,
@@ -125,13 +127,13 @@ class _HomePageState extends State<HomePage>
                         _tasks = state.list;
                         _offset = state.list.pageNumber ?? 0;
 
-                        Map<String, List<TaskEntity>> groupByDate = groupBy(
+                        groupByDate = groupBy(
                             _tasks.tasks!,
                             (obj) =>
                                 obj.createdAt!.toString().substring(0, 10));
 
                         if (_offset != 0) {
-                          _data?.addAll(groupByDate);
+                          _data?.addAll(groupByDate!);
                         } else {
                           _data = groupByDate;
                         }
@@ -140,7 +142,7 @@ class _HomePageState extends State<HomePage>
                       } else if (state is TodoListEmpty) {
                       } else if (state is TodoListCancel) {}
                       return Container(
-                        padding: const EdgeInsets.only(bottom: 24),
+                        padding: const EdgeInsets.all(24),
                         child: Column(
                           children: [
                             // Text(
@@ -148,76 +150,76 @@ class _HomePageState extends State<HomePage>
                             //   style: const TextStyle(fontSize: 30),
                             // ),
                             Expanded(
-                                child: ListView.builder(
-                              itemCount: _data!.length,
-                              controller: _scrollController,
-                              itemBuilder: (context, i) {
-                                String date = _data!.keys.elementAt(i);
-                                List<TaskEntity> itemsInCategory =
-                                    _data![date]!;
+                                child: RefreshIndicator(
+                              color: Colors.amberAccent,
+                              onRefresh: _refreshData,
+                              child: Container(
+                                child: Listener(
+                                  onPointerMove: (details) {
+                                    if (_tasks.tasks!.length > 0 &&
+                                        details.position.dy > 800) {
+                                      callBloc(_offset + 1, _limit, _status);
+                                    }
+                                  },
+                                  child: ListView.builder(
+                                    itemCount: _data!.length,
+                                    controller: _scrollController,
+                                    physics: const BouncingScrollPhysics(),
+                                    itemBuilder: (context, indexOfDate) {
+                                      date = _data!.keys.elementAt(indexOfDate);
+                                      itemsInCategory = _data![date]!;
 
-                                return Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                          left: 24, right: 24),
-                                      child: Text(
-                                          formatDateStringDDMMYYtoDate(date),
-                                          style: const TextStyle(
-                                              fontSize: 22,
-                                              fontWeight: FontWeight.bold)),
-                                    ),
-                                    ListView.builder(
-                                      shrinkWrap: true,
-                                      physics: const ClampingScrollPhysics(),
-                                      itemCount: itemsInCategory.length,
-                                      itemBuilder: (context, _index) {
-                                        return Container(
-                                          margin: const EdgeInsets.all(10),
-                                          padding: const EdgeInsets.all(10),
-                                          child: Slidable(
-                                            endActionPane: ActionPane(
-                                              motion: const ScrollMotion(),
-                                              children: [
-                                                SlidableAction(
-                                                  onPressed: (context) {
-                                                    widget.sessionStateStream
-                                                        .add(SessionState
-                                                            .startListening);
-
-                                                    setState(() {
-                                                      context
-                                                          .read<TodoListCubit>()
-                                                          .removeTask(
-                                                              _tasks,
-                                                              itemsInCategory[
-                                                                  _index]);
-                                                    });
-                                                  },
-                                                  backgroundColor:
-                                                      const Color(0xFFFE4A49),
-                                                  foregroundColor: Colors.white,
-                                                  icon: Icons.delete,
-                                                  label: 'Delete',
-                                                ),
-                                              ],
+                                      return Container(
+                                        margin:
+                                            const EdgeInsets.only(bottom: 50),
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 24, right: 24),
+                                              child: Text(
+                                                  formatDateStringDDMMYYtoDate(
+                                                      date ?? ''),
+                                                  style: const TextStyle(
+                                                      fontSize: 22,
+                                                      fontWeight:
+                                                          FontWeight.bold)),
                                             ),
-                                            child: CardList(
-                                              title:
-                                                  itemsInCategory[_index].title,
-                                              description:
-                                                  itemsInCategory[_index]
-                                                      .description,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    )
-                                  ],
-                                );
-                              },
+                                            ListView.builder(
+                                              shrinkWrap: true,
+                                              physics:
+                                                  const ClampingScrollPhysics(),
+                                              itemCount:
+                                                  itemsInCategory!.length,
+                                              itemBuilder:
+                                                  (context, _indexOfItems) {
+                                                return ContainerCard(
+                                                    tasks: _tasks,
+                                                    id: itemsInCategory![
+                                                            _indexOfItems]
+                                                        .id,
+                                                    title: itemsInCategory![
+                                                            _indexOfItems]
+                                                        .title,
+                                                    description:
+                                                        itemsInCategory![
+                                                                _indexOfItems]
+                                                            .description,
+                                                    item: itemsInCategory![
+                                                        _indexOfItems]);
+                                              },
+                                            )
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
                             )),
                             state is TodoListLoading
                                 ? const Progressbar()
@@ -237,7 +239,7 @@ class _HomePageState extends State<HomePage>
   }
 }
 
-Widget _topbar(BuildContext context) {
+Widget containerHeader(BuildContext context) {
   return Positioned(
     child: Container(
       margin: const EdgeInsets.only(bottom: 30),
@@ -290,9 +292,9 @@ Widget _topbar(BuildContext context) {
   );
 }
 
-Widget _tabbar(BuildContext context, tab) {
+Widget containerTabbar(BuildContext context, tab) {
   return Positioned(
-    top: MediaQuery.of(context).size.height * 0.21,
+    top: MediaQuery.of(context).size.height * 0.22,
     left: 40,
     right: 40,
     bottom: 0,
@@ -300,10 +302,61 @@ Widget _tabbar(BuildContext context, tab) {
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
           color: const Color.fromARGB(255, 241, 241, 241),
-          borderRadius: BorderRadius.circular(70)),
+          borderRadius: BorderRadius.circular(80)),
       child: Column(
         children: [tab],
       ),
     ),
   );
+}
+
+class ContainerCard extends StatefulWidget {
+  final tasks;
+  final id;
+  final title;
+  final description;
+  final item;
+  const ContainerCard(
+      {super.key,
+      this.tasks,
+      this.id,
+      this.title,
+      this.description,
+      this.item});
+
+  @override
+  State<ContainerCard> createState() => _ContainerCardState();
+}
+
+class _ContainerCardState extends State<ContainerCard> {
+  @override
+  Widget build(BuildContext context) {
+    return Slidable(
+      endActionPane: ActionPane(
+        motion: const ScrollMotion(),
+        children: [
+          SlidableAction(
+            onPressed: (context) {
+              print(widget.id);
+
+              setState(() {
+                context
+                    .read<TodoListCubit>()
+                    .removeTask(widget.tasks, widget.item);
+              });
+            },
+            backgroundColor: const Color(0xFFFE4A49),
+            foregroundColor: Colors.white,
+            icon: Icons.delete,
+            label: 'Delete',
+          ),
+        ],
+      ),
+      child: CardList(
+        id: widget.id,
+        title: widget.title,
+        description: widget.description,
+      ),
+    );
+  }
 }

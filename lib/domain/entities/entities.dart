@@ -1,7 +1,7 @@
 import 'package:app_show_categories/data/models/models.dart';
 
 class TodoListEntity {
-  final List<TaskEntity>? tasks;
+  late final List<TaskEntity>? tasks;
   final int? pageNumber;
   final int? totalPages;
 
