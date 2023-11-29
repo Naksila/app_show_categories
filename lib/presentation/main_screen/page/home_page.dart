@@ -136,14 +136,11 @@ class _HomePageState extends State<HomePage>
                           _data = groupByDate;
                         }
                       } else if (state is TodoListFirstLoading) {
-                        return const Center(
-                          child: CircularProgressIndicator(
-                              color: Colors.amberAccent),
-                        );
-                      } else if (state is TodoListEmpty) {}
-
+                        return const Progressbar();
+                      } else if (state is TodoListEmpty) {
+                      } else if (state is TodoListCancel) {}
                       return Container(
-                        height: MediaQuery.of(context).size.height * 1,
+                        padding: const EdgeInsets.only(bottom: 24),
                         child: Column(
                           children: [
                             // Text(
@@ -207,73 +204,12 @@ class _HomePageState extends State<HomePage>
                                                 ),
                                               ],
                                             ),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                const CircleAvatar(
-                                                  radius: 30,
-                                                  backgroundColor:
-                                                      Color.fromARGB(
-                                                          76, 155, 190, 255),
-                                                  child: Icon(
-                                                    Icons.food_bank_rounded,
-                                                    color: Colors.black,
-                                                    size: 30,
-                                                  ),
-                                                ),
-                                                SizedBox(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      0.5,
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        itemsInCategory[_index]
-                                                            .title
-                                                            .toString(),
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: const TextStyle(
-                                                          fontSize: 22,
-                                                          fontWeight:
-                                                              FontWeight.w700,
-                                                          color: Color.fromARGB(
-                                                              255, 51, 51, 51),
-                                                        ),
-                                                      ),
-                                                      Text(
-                                                        itemsInCategory[_index]
-                                                            .description
-                                                            .toString(),
-                                                        maxLines: 2,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: const TextStyle(
-                                                          fontSize: 22,
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                          color: Color.fromARGB(
-                                                              255,
-                                                              149,
-                                                              149,
-                                                              149),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                IconButton(
-                                                    onPressed: () {},
-                                                    icon: const Icon(
-                                                        Icons.more_vert))
-                                              ],
+                                            child: CardList(
+                                              title:
+                                                  itemsInCategory[_index].title,
+                                              description:
+                                                  itemsInCategory[_index]
+                                                      .description,
                                             ),
                                           ),
                                         );
@@ -284,10 +220,7 @@ class _HomePageState extends State<HomePage>
                               },
                             )),
                             state is TodoListLoading
-                                ? const Center(
-                                    child: CircularProgressIndicator(
-                                        color: Colors.amberAccent),
-                                  )
+                                ? const Progressbar()
                                 : const Center(),
                           ],
                         ),
