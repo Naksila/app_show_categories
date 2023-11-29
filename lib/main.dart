@@ -24,15 +24,18 @@ class MyApp extends StatelessWidget {
   final sessionStateStream = StreamController<SessionState>();
   final _navigatorKey = GlobalKey<NavigatorState>();
 
+  final TodoListCubit todoListCubit = TodoListCubit(di.locator());
+
   NavigatorState get _navigator => _navigatorKey.currentState!;
 
   @override
   Widget build(BuildContext context) {
     final sessionConfig = SessionConfig(
       // invalidateSessionForAppLostFocus: const Duration(seconds: 10),
-      invalidateSessionForUserInactivity: const Duration(minutes: 10),
+      invalidateSessionForUserInactivity: const Duration(seconds: 10),
     );
     sessionConfig.stream.listen((SessionTimeoutState timeoutEvent) {
+      print('SessionTimeoutState');
       sessionStateStream.add(SessionState.stopListening);
       if (timeoutEvent == SessionTimeoutState.userInactivityTimeout) {
         _navigator.push(MaterialPageRoute(
@@ -53,19 +56,21 @@ class MyApp extends StatelessWidget {
       sessionConfig: sessionConfig,
       sessionStateStream: sessionStateStream.stream,
       child: MaterialApp(
-          navigatorKey: _navigatorKey,
-          theme: ThemeData(fontFamily: 'DB Heavent'),
-          onGenerateRoute: (route) => RouterGenerator.generateRoute(route),
-          home: BlocProvider(
-            create: (context) => di.locator<TodoListCubit>(),
-            child: HomePage(
-              sessionStateStream: sessionStateStream,
-            ),
-          )
-          // PasscodeLockScreenPages(
-          //   sessionStateStream: sessionStateStream,
-          // ),
-          ),
+        navigatorKey: _navigatorKey,
+        theme: ThemeData(fontFamily: 'DB Heavent'),
+        onGenerateRoute: (route) => RouterGenerator.generateRoute(route),
+        home:
+            // BlocProvider(
+            //   create: (context) => di.locator<TodoListCubit>(),
+            //   child:
+            //   HomePage(
+            //     sessionStateStream: sessionStateStream,
+            //   ),
+            // )
+            PasscodeLockScreenPages(
+          sessionStateStream: sessionStateStream,
+        ),
+      ),
     );
   }
 }

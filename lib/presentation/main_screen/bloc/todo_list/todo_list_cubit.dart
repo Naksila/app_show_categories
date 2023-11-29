@@ -26,8 +26,6 @@ class TodoListCubit extends Cubit<TodoListState> {
         ? emit(TodoListFirstLoading())
         : emit(TodoListLoading(data, 'Loading'));
 
-    // print('getToDoList');
-
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () async {
       final response = await _listUsecase.execute(
@@ -38,15 +36,11 @@ class TodoListCubit extends Cubit<TodoListState> {
         status,
       );
 
-      // print('_debounce run');
-      // print('offset >> ' + offset.toString());
-
       response.fold(
         (left) {
           isInitial
               ? emit(TodoListFailed(left.message))
               : emit(TodoListLoading(data, 'Failed to load more data'));
-          // print('left >> ' + left.message.toString());
         },
         (right) {
           print('isInitial: $isInitial');
@@ -68,12 +62,19 @@ class TodoListCubit extends Cubit<TodoListState> {
             }
           }
 
-          // print('right   >> ' + data.toString());
-          // print('right length  >> ' + data.tasks!.length.toString());
-
           emit(TodoListHasData(data));
         },
       );
     });
+  }
+
+  void removeTask(TodoListEntity tasks, TaskEntity removeTask) {
+    emit(TodoListLoading(tasks, null));
+    tasks.tasks?.removeWhere((element) => element.id == removeTask.id);
+    emit(TodoListHasData(tasks));
+  }
+
+  void closeState() {
+    emit(TodoListCancel());
   }
 }

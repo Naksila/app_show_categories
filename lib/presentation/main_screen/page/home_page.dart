@@ -55,24 +55,32 @@ class _HomePageState extends State<HomePage>
 
   @override
   void initState() {
-    callBloc(_offset, _limit, _status);
+    context.read<TodoListCubit>().closeState();
     _tabController = TabController(length: 3, vsync: this);
     _scrollController = ScrollController()..addListener(loadMore);
+    callBloc(_offset, _limit, _status);
     super.initState();
   }
 
   @override
   void dispose() {
+    callBloc(_offset, _limit, _status);
     _tabController?.dispose();
     _scrollController?.dispose();
+    print("Disposing first route");
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    print("didChangeDependencies");
+    super.didChangeDependencies();
   }
 
   void loadMore() async {
     widget.sessionStateStream.add(SessionState.startListening);
     if (_scrollController!.position.extentAfter < 100) {
       callBloc(_offset + 1, _limit, _status);
-      // setState(() {});
     }
   }
 
@@ -116,8 +124,6 @@ class _HomePageState extends State<HomePage>
                       if (state is TodoListHasData) {
                         _tasks = state.list;
                         _offset = state.list.pageNumber ?? 0;
-                        print('data >>>>>>>>>>>> ' +
-                            _tasks.tasks!.length.toString());
 
                         Map<String, List<TaskEntity>> groupByDate = groupBy(
                             _tasks.tasks!,
@@ -134,149 +140,157 @@ class _HomePageState extends State<HomePage>
                           child: CircularProgressIndicator(
                               color: Colors.amberAccent),
                         );
-                      } else if (state is TodoListEmpty) {
-                      } else if (state is TodoListFailed) {
-                        return Center(
-                            child: Text(
-                          '${state.message}',
-                          style: const TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.w600),
-                        ));
-                      }
-                      return Column(
-                        children: [
-                          Text(
-                            _tasks.tasks!.length.toString(),
-                            style: const TextStyle(fontSize: 30),
-                          ),
-                          Expanded(
-                              child: ListView.builder(
-                            itemCount: _data!.length,
-                            controller: _scrollController,
-                            itemBuilder: (context, i) {
-                              String date = _data!.keys.elementAt(i);
-                              List<TaskEntity> itemsInCategory = _data![date]!;
-                              return Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 24, right: 24),
-                                    child: Text(
-                                        formatDateStringDDMMYYtoDate(date),
-                                        style: const TextStyle(
-                                            fontSize: 22,
-                                            fontWeight: FontWeight.bold)),
-                                  ),
-                                  ListView.builder(
-                                    shrinkWrap: true,
-                                    physics: const ClampingScrollPhysics(),
-                                    itemCount: itemsInCategory.length,
-                                    itemBuilder: (context, _index) {
-                                      return Container(
-                                        margin: const EdgeInsets.all(10),
-                                        padding: const EdgeInsets.all(10),
-                                        child: Slidable(
-                                          endActionPane: ActionPane(
-                                            motion: const ScrollMotion(),
-                                            children: [
-                                              SlidableAction(
-                                                onPressed: (context) {
-                                                  widget.sessionStateStream.add(
-                                                      SessionState
-                                                          .startListening);
-                                                  setState(() {
-                                                    _data!.removeWhere((key,
-                                                            value) =>
-                                                        value[_index] == 'b');
-                                                  });
-                                                },
-                                                backgroundColor:
-                                                    const Color(0xFFFE4A49),
-                                                foregroundColor: Colors.white,
-                                                icon: Icons.delete,
-                                                label: 'Delete',
-                                              ),
-                                            ],
-                                          ),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              const CircleAvatar(
-                                                radius: 30,
-                                                backgroundColor: Color.fromARGB(
-                                                    76, 155, 190, 255),
-                                                child: Icon(
-                                                  Icons.food_bank_rounded,
-                                                  color: Colors.black,
-                                                  size: 30,
+                      } else if (state is TodoListEmpty) {}
+
+                      return Container(
+                        height: MediaQuery.of(context).size.height * 1,
+                        child: Column(
+                          children: [
+                            // Text(
+                            //   _tasks.tasks!.length.toString(),
+                            //   style: const TextStyle(fontSize: 30),
+                            // ),
+                            Expanded(
+                                child: ListView.builder(
+                              itemCount: _data!.length,
+                              controller: _scrollController,
+                              itemBuilder: (context, i) {
+                                String date = _data!.keys.elementAt(i);
+                                List<TaskEntity> itemsInCategory =
+                                    _data![date]!;
+
+                                return Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          left: 24, right: 24),
+                                      child: Text(
+                                          formatDateStringDDMMYYtoDate(date),
+                                          style: const TextStyle(
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.bold)),
+                                    ),
+                                    ListView.builder(
+                                      shrinkWrap: true,
+                                      physics: const ClampingScrollPhysics(),
+                                      itemCount: itemsInCategory.length,
+                                      itemBuilder: (context, _index) {
+                                        return Container(
+                                          margin: const EdgeInsets.all(10),
+                                          padding: const EdgeInsets.all(10),
+                                          child: Slidable(
+                                            endActionPane: ActionPane(
+                                              motion: const ScrollMotion(),
+                                              children: [
+                                                SlidableAction(
+                                                  onPressed: (context) {
+                                                    widget.sessionStateStream
+                                                        .add(SessionState
+                                                            .startListening);
+
+                                                    setState(() {
+                                                      context
+                                                          .read<TodoListCubit>()
+                                                          .removeTask(
+                                                              _tasks,
+                                                              itemsInCategory[
+                                                                  _index]);
+                                                    });
+                                                  },
+                                                  backgroundColor:
+                                                      const Color(0xFFFE4A49),
+                                                  foregroundColor: Colors.white,
+                                                  icon: Icons.delete,
+                                                  label: 'Delete',
                                                 ),
-                                              ),
-                                              SizedBox(
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    0.5,
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      itemsInCategory[_index]
-                                                          .title
-                                                          .toString(),
-                                                      maxLines: 1,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: const TextStyle(
-                                                        fontSize: 22,
-                                                        fontWeight:
-                                                            FontWeight.w700,
-                                                        color: Color.fromARGB(
-                                                            255, 51, 51, 51),
-                                                      ),
-                                                    ),
-                                                    Text(
-                                                      itemsInCategory[_index]
-                                                          .description
-                                                          .toString(),
-                                                      maxLines: 2,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: const TextStyle(
-                                                        fontSize: 22,
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                        color: Color.fromARGB(
-                                                            255, 149, 149, 149),
-                                                      ),
-                                                    ),
-                                                  ],
+                                              ],
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                const CircleAvatar(
+                                                  radius: 30,
+                                                  backgroundColor:
+                                                      Color.fromARGB(
+                                                          76, 155, 190, 255),
+                                                  child: Icon(
+                                                    Icons.food_bank_rounded,
+                                                    color: Colors.black,
+                                                    size: 30,
+                                                  ),
                                                 ),
-                                              ),
-                                              IconButton(
-                                                  onPressed: () {},
-                                                  icon: const Icon(
-                                                      Icons.more_vert))
-                                            ],
+                                                SizedBox(
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width *
+                                                      0.5,
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        itemsInCategory[_index]
+                                                            .title
+                                                            .toString(),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                          fontSize: 22,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                          color: Color.fromARGB(
+                                                              255, 51, 51, 51),
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        itemsInCategory[_index]
+                                                            .description
+                                                            .toString(),
+                                                        maxLines: 2,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                          fontSize: 22,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          color: Color.fromARGB(
+                                                              255,
+                                                              149,
+                                                              149,
+                                                              149),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                IconButton(
+                                                    onPressed: () {},
+                                                    icon: const Icon(
+                                                        Icons.more_vert))
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                      );
-                                    },
+                                        );
+                                      },
+                                    )
+                                  ],
+                                );
+                              },
+                            )),
+                            state is TodoListLoading
+                                ? const Center(
+                                    child: CircularProgressIndicator(
+                                        color: Colors.amberAccent),
                                   )
-                                ],
-                              );
-                            },
-                          )),
-                          state is TodoListLoading
-                              ? const Center(
-                                  child: CircularProgressIndicator(
-                                      color: Colors.amberAccent),
-                                )
-                              : const Center(),
-                        ],
+                                : const Center(),
+                          ],
+                        ),
                       );
                     },
                   );
@@ -356,104 +370,6 @@ Widget _tabbar(BuildContext context, tab) {
           borderRadius: BorderRadius.circular(70)),
       child: Column(
         children: [tab],
-      ),
-    ),
-  );
-}
-
-Widget _getGroupSeparator(TaskEntity element) {
-  return SizedBox(
-    height: 50,
-    child: Align(
-      alignment: Alignment.center,
-      child: Container(
-        width: 120,
-        decoration: BoxDecoration(
-          color: Colors.blue[300],
-          border: Border.all(
-            color: Colors.blue[300]!,
-          ),
-          borderRadius: const BorderRadius.all(Radius.circular(20.0)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text(
-            formatDateStringDDMMYYtoDate(element.createdAt.toString()),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-Widget _getItem(BuildContext ctx, TaskEntity element) {
-  return Container(
-    margin: const EdgeInsets.all(10),
-    padding: const EdgeInsets.all(10),
-    child: Slidable(
-      endActionPane: ActionPane(
-        motion: const ScrollMotion(),
-        children: [
-          SlidableAction(
-            onPressed: (context) {
-              // setState(() {
-              //   element.removeAt(index);
-              // });
-            },
-            backgroundColor: const Color(0xFFFE4A49),
-            foregroundColor: Colors.white,
-            icon: Icons.delete,
-            label: 'Delete',
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const CircleAvatar(
-            radius: 30,
-            backgroundColor: Color.fromARGB(76, 155, 190, 255),
-            child: Icon(
-              Icons.food_bank_rounded,
-              color: Colors.black,
-              size: 30,
-            ),
-          ),
-          SizedBox(
-            width: MediaQuery.of(ctx).size.width * 0.5,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  formatDateStringDDMMYYtoDate(element.createdAt.toString()),
-                  style: const TextStyle(color: Colors.red, fontSize: 22),
-                ),
-                Text(
-                  element.title.toString(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: Color.fromARGB(255, 51, 51, 51),
-                  ),
-                ),
-                Text(
-                  element!.description.toString(),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w500,
-                    color: Color.fromARGB(255, 149, 149, 149),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert))
-        ],
       ),
     ),
   );
