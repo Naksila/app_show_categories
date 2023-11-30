@@ -180,7 +180,7 @@ class _HomePageState extends State<HomePage>
                                           children: [
                                             Padding(
                                               padding: const EdgeInsets.only(
-                                                  left: 24, right: 24),
+                                                  bottom: 16),
                                               child: Text(
                                                   formatDateStringDDMMYYtoDate(
                                                       date ?? ''),
@@ -294,7 +294,7 @@ Widget containerHeader(BuildContext context) {
 
 Widget containerTabbar(BuildContext context, tab) {
   return Positioned(
-    top: MediaQuery.of(context).size.height * 0.22,
+    top: MediaQuery.of(context).size.height * 0.21,
     left: 40,
     right: 40,
     bottom: 0,

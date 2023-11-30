@@ -27,16 +27,16 @@ class CardList extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '$id',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: Color.fromARGB(255, 51, 51, 51),
-                ),
-              ),
+              // Text(
+              //   '$id',
+              //   maxLines: 1,
+              //   overflow: TextOverflow.ellipsis,
+              //   style: const TextStyle(
+              //     fontSize: 22,
+              //     fontWeight: FontWeight.w700,
+              //     color: Color.fromARGB(255, 51, 51, 51),
+              //   ),
+              // ),
               Text(
                 '$title',
                 maxLines: 1,

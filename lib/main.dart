@@ -59,15 +59,7 @@ class MyApp extends StatelessWidget {
         navigatorKey: _navigatorKey,
         theme: ThemeData(fontFamily: 'DB Heavent'),
         onGenerateRoute: (route) => RouterGenerator.generateRoute(route),
-        home:
-            // BlocProvider(
-            //   create: (context) => di.locator<TodoListCubit>(),
-            //   child:
-            //   HomePage(
-            //     sessionStateStream: sessionStateStream,
-            //   ),
-            // )
-            PasscodeLockScreenPages(
+        home: PasscodeLockScreenPages(
           sessionStateStream: sessionStateStream,
         ),
       ),
