@@ -71,7 +71,9 @@ class TodoListCubit extends Cubit<TodoListState> {
 
   void removeTask(TodoListEntity tasks, TaskEntity removeTask) {
     emit(TodoListLoading(tasks, null));
+
     tasks.tasks?.removeWhere((element) => element.id == removeTask.id);
+
     emit(TodoListHasData(tasks));
   }
 

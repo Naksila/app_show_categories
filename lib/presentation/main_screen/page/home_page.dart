@@ -41,14 +41,11 @@ class _HomePageState extends State<HomePage>
   ];
 
   int _offset = 0;
-  int _limit = 5;
+  int _limit = 10;
   int _totalPages = 0;
   String _status = 'TODO';
   double y = 0;
 
-  Map<String, List<TaskEntity>>? _data;
-  String? date;
-  List<TaskEntity>? itemsInCategory;
   Map<String, List<TaskEntity>>? groupByDate;
   TodoListEntity _tasks =
       TodoListEntity(tasks: [], pageNumber: 0, totalPages: 0);
@@ -80,6 +77,7 @@ class _HomePageState extends State<HomePage>
   void callBloc(int offset, int limit, String status) {
     context.read<TodoListCubit>().getToDoList(offset, limit, status);
     widget.sessionStateStream.add(SessionState.startListening);
+    setState(() {});
   }
 
   Future<void> _refreshData() async {
@@ -103,7 +101,7 @@ class _HomePageState extends State<HomePage>
                 Tabbar(
                   tabs: _tabs,
                   onTab: (p0) {
-                    _data = null;
+                    groupByDate = null;
                     _offset = 0;
                     _status = _tabs[p0].text!;
                     callBloc(0, _limit, _tabs[p0].text.toString());
@@ -131,12 +129,6 @@ class _HomePageState extends State<HomePage>
                             _tasks.tasks!,
                             (obj) =>
                                 obj.createdAt!.toString().substring(0, 10));
-
-                        if (_offset != 0) {
-                          _data?.addAll(groupByDate!);
-                        } else {
-                          _data = groupByDate;
-                        }
                       } else if (state is TodoListFirstLoading) {
                         return const Progressbar();
                       } else if (state is TodoListEmpty) {
@@ -156,18 +148,20 @@ class _HomePageState extends State<HomePage>
                               child: Container(
                                 child: Listener(
                                   onPointerMove: (details) {
-                                    if (_tasks.tasks!.length > 0 &&
+                                    if (_tasks.tasks!.isNotEmpty &&
                                         details.position.dy > 800) {
                                       callBloc(_offset + 1, _limit, _status);
                                     }
                                   },
                                   child: ListView.builder(
-                                    itemCount: _data!.length,
+                                    itemCount: groupByDate!.length,
                                     controller: _scrollController,
                                     physics: const BouncingScrollPhysics(),
                                     itemBuilder: (context, indexOfDate) {
-                                      date = _data!.keys.elementAt(indexOfDate);
-                                      itemsInCategory = _data![date]!;
+                                      String date = groupByDate!.keys
+                                          .elementAt(indexOfDate);
+                                      List<TaskEntity> itemsInCategory =
+                                          groupByDate![date]!;
 
                                       return Container(
                                         margin:
@@ -183,7 +177,7 @@ class _HomePageState extends State<HomePage>
                                                   bottom: 16),
                                               child: Text(
                                                   formatDateStringDDMMYYtoDate(
-                                                      date ?? ''),
+                                                      date),
                                                   style: const TextStyle(
                                                       fontSize: 22,
                                                       fontWeight:
@@ -193,23 +187,22 @@ class _HomePageState extends State<HomePage>
                                               shrinkWrap: true,
                                               physics:
                                                   const ClampingScrollPhysics(),
-                                              itemCount:
-                                                  itemsInCategory!.length,
+                                              itemCount: itemsInCategory.length,
                                               itemBuilder:
                                                   (context, _indexOfItems) {
                                                 return ContainerCard(
                                                     tasks: _tasks,
-                                                    id: itemsInCategory![
+                                                    id: itemsInCategory[
                                                             _indexOfItems]
                                                         .id,
-                                                    title: itemsInCategory![
+                                                    title: itemsInCategory[
                                                             _indexOfItems]
                                                         .title,
                                                     description:
-                                                        itemsInCategory![
+                                                        itemsInCategory[
                                                                 _indexOfItems]
                                                             .description,
-                                                    item: itemsInCategory![
+                                                    item: itemsInCategory[
                                                         _indexOfItems]);
                                               },
                                             )
@@ -337,13 +330,11 @@ class _ContainerCardState extends State<ContainerCard> {
         children: [
           SlidableAction(
             onPressed: (context) {
-              print(widget.id);
-
-              setState(() {
-                context
-                    .read<TodoListCubit>()
-                    .removeTask(widget.tasks, widget.item);
-              });
+              // setState(() {
+              context
+                  .read<TodoListCubit>()
+                  .removeTask(widget.tasks, widget.item);
+              // });
             },
             backgroundColor: const Color(0xFFFE4A49),
             foregroundColor: Colors.white,
@@ -352,7 +343,7 @@ class _ContainerCardState extends State<ContainerCard> {
           ),
         ],
       ),
-      child: CardList(
+      child: CardItem(
         id: widget.id,
         title: widget.title,
         description: widget.description,
